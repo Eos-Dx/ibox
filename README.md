@@ -121,7 +121,7 @@ For maximum security and stability of your microservice, use the following attri
     title="Microservice Name"
     
     /* Security: Essential for ibox to work safely */
-    sandbox="allow-scripts allow-same-origin allow-forms"
+    sandbox="allow-scripts allow-same-origin"
     
     /* Permissions: Grant access to specific browser APIs if needed */
     allow="geolocation; camera; microphone"
@@ -167,9 +167,14 @@ const newMessenger = ibox.host(iframe, 'https://new-app-origin.com')
 
 ### Interface Methods:
 
-- **on(event, callback):** Registers a listener for a specific event name.
-- **emit(event, data):** Sends a data payload to the other side.
-- **destroy():** Closes the message port and removes internal event listeners.
+Both `host` and `client` instances provide the same interface:
+
+*   **`on(event, callback)`**: Registers a listener for a specific event.
+    *   If the `callback` returns a value (or a Promise), it will be sent back to the caller (when using `.call()`).
+*   **`emit(event, data)`**: Sends a fire-and-forget message to the other side.
+*   **`call(event, data, [timeout])`**: Sends a request and returns a **Promise** that resolves with the response.
+    *   Default `timeout` is **5000ms**.
+*   **`destroy()`**: Completely closes the connection, clears all internal event
 
 ---
 
