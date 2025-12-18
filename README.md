@@ -21,17 +21,17 @@ A lightweight modern library for seamless two-way communication between a main a
 Initialize the communication by providing the iframe element and the expected origin of the child application.
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/Eos-Dx/ibox@latest/ibox.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/kossyak/iboxjs@latest/ibox.min.js"></script>
 ```
 
 ```javascript
 const iframe = document.querySelector('#my-iframe')
-const messenger = ibox.host(iframe, 'https://child-app.com')
+const messenger = await ibox.host(iframe, 'https://child-app.com')
 
 // Listen for events from the iframe
 messenger.on('request_data', (data) => {
   console.log('Iframe requested:', data)
-});
+})
 
 // Send events to the iframe
 messenger.emit('set_theme', { color: 'blue' })
@@ -43,7 +43,7 @@ messenger.emit('set_theme', { color: 'blue' })
 
 The client method returns a Promise that resolves once the secure channel is established with the host.
 ```html
-<script src="https://cdn.jsdelivr.net/gh/Eos-Dx/ibox@latest/ibox.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/kossyak/iboxjs@latest/ibox.min.js"></script>
 ```
 ```javascript
 // Wait for the connection to be established
@@ -72,7 +72,7 @@ In addition to standard event emitting, ibox supports a Promise-based RPC (Remot
    messenger.on('get_user_name', async (userId) => {
        // You can perform async operations here
        const user = await db.find(userId)
-       return user.name; // This value will be sent back to the Host
+       return user.name // This value will be sent back to the Host
    })
 ```
 
@@ -82,11 +82,11 @@ In addition to standard event emitting, ibox supports a Promise-based RPC (Remot
    // Inside the Main App (Host)
    try {
        // messenger.call(eventName, data, timeoutMs)
-       const name = await messenger.call('get_user_name', 123);
-       console.log('Received from iframe:', name);
+       const name = await messenger.call('get_user_name', 123)
+       console.log('Received from iframe:', name)
    } catch (error) {
        // Handle timeout or connection errors
-       console.error('Request failed:', error.message);
+       console.error('Request failed:', error.message)
    }
 ````
 
@@ -94,7 +94,7 @@ In addition to standard event emitting, ibox supports a Promise-based RPC (Remot
 messenger.call(event, data, timeout)
 - event (string): The name of the event to trigger.
 - data (any): Data to send to the listener.
-- timeout (number, optional): Time in milliseconds to wait for a response before rejecting the promise. Default: 5000ms.
+- timeout (number, optional): Time in milliseconds to wait for a response before rejecting the promise. Default: 10000ms.
 
 ---
 
@@ -108,7 +108,7 @@ const messenger = window.ibox.host(iframe, 'https://child-app.com')
 ```
 For standard scripts (without type="module"), you can continue using the shorthand:
 ```javascript
-const messenger = ibox.host(iframe, 'https://child-app.com');
+const messenger = ibox.host(iframe, 'https://child-app.com')
 ```
 
 ---
@@ -121,7 +121,7 @@ For maximum security and stability of your microservice, use the following attri
     title="Microservice Name"
     
     /* Security: Essential for ibox to work safely */
-    sandbox="allow-scripts allow-same-origin"
+    sandbox="allow-scripts allow-same-origin allow-forms"
     
     /* Permissions: Grant access to specific browser APIs if needed */
     allow="geolocation; camera; microphone"
@@ -143,12 +143,12 @@ ibox.host(iframeElement, targetOrigin)
 
 - **iframeElement:** The HTMLIFrameElement to communicate with.
 - **targetOrigin:** The specific origin (e.g., https://example.com) of the iframe content.
-- **Returns:** An object containing emit, on, and destroy methods.
+- **Returns:** A Promise that resolves to an interface object.
 
 ibox.client(hostOrigin)
 
 - **hostOrigin:** The specific origin of the parent application.
-- **Returns:** A Promise that resolves to an object containing emit, on, and destroy methods.
+- **Returns:** A Promise that resolves to an interface object.
 
 ### Handling Iframe Navigation
 
@@ -162,19 +162,28 @@ messenger.destroy()
 iframe.src = 'new-app-origin.com'
 
 // 3. Re-initialize the host when needed
-const newMessenger = ibox.host(iframe, 'https://new-app-origin.com')
+const newMessenger = await ibox.host(iframe, 'https://new-app-origin.com')
 ```
 
 ### Interface Methods:
+- **on(event, callback):** Registers a listener for a specific event.
+  Returns: An unsubscription function. Calling this function will remove the listener.
+```javascript
+    const unsub = messenger.on('get_status', (data) => { ... });
+    unsub() // Stop listening
+```
 
-Both `host` and `client` instances provide the same interface:
+- **off(event, callback):** Manually removes a previously registered event listener.
+- **emit(event, data):** Sends a data payload to the other side without waiting for a response (Fire-and-forget).
+- **call(event, data, timeout):** Sends a request and returns a Promise that resolves with the response from the other side.
+    - event (string): Event name.
+    - data (any): Payload to send.
+    - timeout (number, optional): Timeout in milliseconds. Default: 10000ms.
+  ```javascript
+  const response = await messenger.call('fetch_user', { id: 1 })
+  ```
 
-*   **`on(event, callback)`**: Registers a listener for a specific event.
-    *   If the `callback` returns a value (or a Promise), it will be sent back to the caller (when using `.call()`).
-*   **`emit(event, data)`**: Sends a fire-and-forget message to the other side.
-*   **`call(event, data, [timeout])`**: Sends a request and returns a **Promise** that resolves with the response.
-    *   Default `timeout` is **5000ms**.
-*   **`destroy()`**: Completely closes the connection, clears all internal event
+- **destroy():** Immediately closes the MessagePort, rejects all pending calls, and clears all internal event handlers. Useful for memory management during iframe navigation or component unmounting.
 
 ---
 
