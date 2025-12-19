@@ -39,6 +39,14 @@ messenger.emit('set_theme', { color: 'blue' })
 // Cleanup when needed
 // messenger.destroy()
 ```
+
+### Cache Refresh
+If you have recently updated the library but don't see the changes, you can manually purge the jsDelivr cache by visiting this link:
+
+[https://purge.jsdelivr.net/gh/Eos-Dx/ibox@latest/ibox.min.js](https://purge.jsdelivr.net/gh/Eos-Dx/ibox@latest/ibox.min.js)
+
+*Note: It may take up to a few minutes for the changes to propagate globally.*
+
 ### 2. Iframe Application (Client)
 
 The client method returns a Promise that resolves once the secure channel is established with the host.
